@@ -4,7 +4,8 @@ let state = JSON.parse(localStorage.getItem('app_foco_state')) || {
   lastDate: null,          // Última data em que abriu o app ('YYYY-MM-DD')
   completedTodayDate: null, // Data em que ganhou +1 na ofensiva ('YYYY-MM-DD')
   masterTasks: [],         // Lista fixa de atividades diárias habilitadas
-  todayTasks: []           // [{ id, text, done }] do dia atual
+  todayTasks: [],          // [{ id, text, done }] do dia atual
+  lastCelebratedStreak: 0  // Guardar última ofensiva em que disparou a celebração de 5 dias
 };
 
 // Sugestões padrão com ícones
@@ -54,6 +55,24 @@ function initDayCheck() {
   }
 }
 
+// Verifica se atingiu a meta de 5 dias e abre a janela de parabéns
+function checkGoalCelebration() {
+  if (state.streak > 0 && state.streak % 5 === 0 && state.lastCelebratedStreak !== state.streak) {
+    state.lastCelebratedStreak = state.streak;
+    saveState();
+    setTimeout(() => {
+      const modal = document.getElementById('congratsModal');
+      if (modal) modal.classList.add('active');
+    }, 300);
+  }
+}
+
+function closeCongratsModal() {
+  const modal = document.getElementById('congratsModal');
+  if (modal) modal.classList.remove('active');
+  render();
+}
+
 // Atualiza lógica da ofensiva com base na lista de hoje
 function updateStreakLogic() {
   const today = getTodayString();
@@ -65,12 +84,13 @@ function updateStreakLogic() {
     if (state.completedTodayDate !== today) {
       state.streak += 1;
       state.completedTodayDate = today;
+      checkGoalCelebration();
     }
   } else {
     // Se NÃO concluiu todas, mas já tinha pontuado hoje (ex: adicionou nova tarefa)
     if (state.completedTodayDate === today) {
       state.streak = Math.max(0, state.streak - 1);
-      state.completedTodayDate = null; // Libera para pontuar novamente assim que terminar a nova
+      state.completedTodayDate = null;
     }
   }
 
@@ -189,6 +209,34 @@ function render() {
     const remaining = state.todayTasks.filter(t => !t.done).length;
     streakStatusEl.innerText = `Falta(m) ${remaining} meta(s) para garantir o dia.`;
     streakStatusEl.className = "streak-status";
+  }
+
+  // 1.5 Card de Meta de 5 Dias e Barra de Progresso
+  const completedCycles = Math.floor(state.streak / 5);
+  const goalCyclesEl = document.getElementById('goalCyclesBadge');
+  if (goalCyclesEl) goalCyclesEl.innerText = `Ciclos: ${completedCycles}`;
+
+  let displayProgress = state.streak % 5;
+  if (state.streak > 0 && state.streak % 5 === 0) {
+    displayProgress = 5;
+  }
+
+  const goalCountEl = document.getElementById('goalCount');
+  if (goalCountEl) goalCountEl.innerText = `${displayProgress} / 5 dias`;
+
+  const fillPercentage = (displayProgress / 5) * 100;
+  const goalFillEl = document.getElementById('goalProgressFill');
+  if (goalFillEl) goalFillEl.style.width = `${fillPercentage}%`;
+
+  for (let i = 1; i <= 5; i++) {
+    const stepEl = document.getElementById(`step${i}`);
+    if (stepEl) {
+      if (i <= displayProgress) {
+        stepEl.className = i === 5 && displayProgress === 5 ? 'step-dot completed' : 'step-dot active';
+      } else {
+        stepEl.className = 'step-dot';
+      }
+    }
   }
 
   // 2. Lista de Hoje

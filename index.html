@@ -16,6 +16,27 @@
       <div class="streak-status" id="streakStatus">Carregando...</div>
     </div>
 
+    <!-- Card de Meta de 5 Dias -->
+    <div class="goal-card">
+      <div class="goal-header">
+        <div class="goal-title-group">
+          <span class="goal-title">🎯 Meta de 5 Dias</span>
+          <span class="goal-cycles-badge" id="goalCyclesBadge">Ciclos: 0</span>
+        </div>
+        <span class="goal-count" id="goalCount">0 / 5 dias</span>
+      </div>
+      <div class="goal-progress-bg">
+        <div class="goal-progress-fill" id="goalProgressFill"></div>
+      </div>
+      <div class="goal-steps">
+        <span class="step-dot" id="step1">1</span>
+        <span class="step-dot" id="step2">2</span>
+        <span class="step-dot" id="step3">3</span>
+        <span class="step-dot" id="step4">4</span>
+        <span class="step-dot" id="step5">🏆</span>
+      </div>
+    </div>
+
     <!-- Navegação por Abas -->
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="switchTab('today')">Hoje</button>
@@ -54,6 +75,17 @@
       <ul id="masterTaskList" class="task-list">
         <!-- Renderizado pelo JS -->
       </ul>
+    </div>
+  </div>
+
+  <!-- Modal de Parabéns -->
+  <div id="congratsModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-icon">🎉 🏆 🎉</div>
+      <h2>META CONCLUÍDA!</h2>
+      <p>Você completou <strong>5 dias seguidos</strong> de meta com sucesso!</p>
+      <p class="modal-sub">Seu progresso resetou e um novo ciclo de 5 dias começou!</p>
+      <button class="btn-modal-close" onclick="closeCongratsModal()">Bora para a próxima! 🚀</button>
     </div>
   </div>
 
