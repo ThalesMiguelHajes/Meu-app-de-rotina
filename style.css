@@ -694,3 +694,35 @@ input[type="text"]:focus {
   color: var(--text-muted);
   line-height: 1.4;
 }
+
+/* App Footer / Apoie o App */
+.app-footer {
+  text-align: center;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(51, 65, 85, 0.4);
+}
+
+.support-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(234, 88, 12, 0.15) 100%);
+  border: 1px solid rgba(249, 115, 22, 0.4);
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 10px 22px;
+  border-radius: 20px;
+  transition: all 0.25 ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.support-link:hover, .support-link:active {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+  box-shadow: 0 4px 18px rgba(249, 115, 22, 0.45);
+  transform: translateY(-2px);
+}
