@@ -307,6 +307,24 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// ==========================================
+// MODO TESTE DEV (FÁCIL REMOÇÃO)
+// ==========================================
+function testAddStreak() {
+  state.streak += 1;
+  checkGoalCelebration();
+  saveState();
+  render();
+}
+
+function testResetStreak() {
+  state.streak = 0;
+  state.lastCelebratedStreak = 0;
+  saveState();
+  render();
+}
+// ==========================================
+
 // Inicialização ao carregar a página
 document.addEventListener('DOMContentLoaded', () => {
   initDayCheck();
