@@ -37,8 +37,11 @@
       </div>
       
       <!-- Seção: Atividades Sugeridas com Interruptor -->
-      <div class="section-header">⭐ Atividades Sugeridas</div>
-      <ul id="defaultTaskList" class="task-list">
+      <div class="section-header collapsible" onclick="toggleSuggestionsCollapse()">
+        <span>⭐ Atividades Sugeridas</span>
+        <button class="btn-toggle-collapse" id="collapseBtn" title="Abrir/Fechar Sugestões">▼</button>
+      </div>
+      <ul id="defaultTaskList" class="task-list collapsible-content">
         <!-- Renderizado pelo JS com interruptor (toggle switch) -->
       </ul>
 

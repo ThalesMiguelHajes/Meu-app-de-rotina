@@ -134,8 +134,43 @@ body {
   margin: 24px 0 12px 0;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
 }
+
+.section-header.collapsible {
+  cursor: pointer;
+  user-select: none;
+}
+
+.btn-toggle-collapse {
+  background: rgba(51, 65, 85, 0.5);
+  border: 1px solid var(--card-border);
+  color: var(--text-muted);
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  transition: transform 0.2s ease, background 0.2s;
+  cursor: pointer;
+}
+
+.section-header.collapsible:hover .btn-toggle-collapse {
+  background: var(--card-border);
+  color: var(--text-main);
+}
+
+.btn-toggle-collapse.collapsed {
+  transform: rotate(-90deg);
+}
+
+.collapsible-content.collapsed {
+  display: none;
+}
+
 
 /* Toggle Switch (Interruptor) */
 .switch {

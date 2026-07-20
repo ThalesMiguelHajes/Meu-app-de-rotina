@@ -78,6 +78,16 @@ function updateStreakLogic() {
   render();
 }
 
+// Alternar recolher/expandir sugestões
+function toggleSuggestionsCollapse() {
+  const contentEl = document.getElementById('defaultTaskList');
+  const btnEl = document.getElementById('collapseBtn');
+  if (contentEl && btnEl) {
+    contentEl.classList.toggle('collapsed');
+    btnEl.classList.toggle('collapsed');
+  }
+}
+
 // Alternar entre abas
 function switchTab(tabName) {
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
