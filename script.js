@@ -401,30 +401,6 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// ==========================================
-// MODO TESTE DEV (FÁCIL REMOÇÃO)
-// ==========================================
-function testAddStreak() {
-  state.streak += 1;
-  const today = getTodayString();
-  if (!state.completedDays.includes(today)) {
-    state.completedDays.push(today);
-  }
-  checkGoalCelebration();
-  saveState();
-  render();
-}
-
-function testResetStreak() {
-  state.streak = 0;
-  state.lastCelebratedStreak = 0;
-  const today = getTodayString();
-  state.completedDays = state.completedDays.filter(d => d !== today);
-  saveState();
-  render();
-}
-// ==========================================
-
 // Inicialização ao carregar a página
 document.addEventListener('DOMContentLoaded', () => {
   initDayCheck();
