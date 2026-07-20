@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Meu Foco Diário</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --accent: #f97316;
+      --accent-hover: #ea580c;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #22c55e;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 20px 16px 80px 16px;
+      flex: 1;
+    }
+
+    /* Streak Header */
+    .streak-card {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px 20px;
+      text-align: center;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .streak-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .streak-title {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+    }
+
+    .streak-count {
+      font-size: 3.5rem;
+      font-weight: 800;
+      color: var(--accent);
+      margin: 8px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .streak-status {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .streak-status.complete {
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      background: #1e293b;
+      padding: 4px;
+      border-radius: 14px;
+      margin-bottom: 20px;
+      border: 1px solid var(--card-border);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.95rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background: #334155;
+      color: var(--text-main);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    /* Views */
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    /* Form Styles */
+    .add-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      color: var(--text-main);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-add {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-add:active {
+      background: var(--accent-hover);
+    }
+
+    /* List Styles */
+    .task-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .task-item {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 16px;
+      border-radius: 14px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: transform 0.1s, border-color 0.2s;
+    }
+
+    .task-item.done {
+      opacity: 0.7;
+      border-color: rgba(34, 197, 94, 0.3);
+      background: rgba(30, 41, 59, 0.6);
+    }
+
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      flex: 1;
+      gap: 12px;
+    }
+
+    .custom-checkbox {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 2px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .task-item.done .custom-checkbox {
+      background: var(--success);
+      border-color: var(--success);
+    }
+
+    .custom-checkbox::after {
+      content: '✓';
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      display: none;
+    }
+
+    .task-item.done .custom-checkbox::after {
+      display: block;
+    }
+
+    .task-text {
+      font-size: 1rem;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .task-item.done .task-text {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .btn-delete {
+      background: transparent;
+      border: none;
+      color: var(--danger);
+      font-size: 1.2rem;
+      padding: 4px 8px;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+
+    .btn-delete:hover, .btn-delete:active {
+      opacity: 1;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .info-card {
+      background: rgba(51, 65, 85, 0.4);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Bloco de Ofensiva -->
+    <div class="streak-card">
+      <div class="streak-title">Ofensiva Atual</div>
+      <div class="streak-count" id="streakCount">🔥 0</div>
+      <div class="streak-status" id="streakStatus">Carregando...</div>
+    </div>
+
+    <!-- Navegação por Abas -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('today')">Hoje</button>
+      <button class="tab-btn" onclick="switchTab('manage')">Gerenciar Atividades</button>
+    </div>
+
+    <!-- Aba 1: Metas de Hoje -->
+    <div id="viewToday" class="view active">
+      <div class="info-card">
+        📌 <strong>Como funciona:</strong> Complete todas as atividades do dia para garantir o seu ponto de ofensiva. Se você adicionar novas atividades, precise concluí-las também!
+      </div>
+      <ul id="todayTaskList" class="task-list"></ul>
+    </div>
+
+    <!-- Aba 2: Gerenciar Atividades Diárias -->
+    <div id="viewManage" class="view">
+      <div class="info-card">
+        ⚙️ <strong>Atividades Diárias:</strong> Cadastre aqui as tarefas que devem aparecer todos os dias.
+      </div>
+      <div class="add-form">
+        <input type="text" id="newMasterInput" placeholder="Nova atividade diária...">
+        <button class="btn-add" onclick="addMasterTask()">+</button>
+      </div>
+      <ul id="masterTaskList" class="task-list"></ul>
+    </div>
+  </div>
+
+  <script>
+    // Configuração dos dados no LocalStorage
+    let state = JSON.parse(localStorage.getItem('app_foco_state')) || {
+      streak: 0,
+      lastDate: null,          // Última data em que abriu o app ('YYYY-MM-DD')
+      completedTodayDate: null, // Data em que ganhou +1 na ofensiva ('YYYY-MM-DD')
+      masterTasks: [],         // Lista fixa de atividades diárias
+      todayTasks: []           // [{ id, text, done }] do dia atual
+    };
+
+    function saveState() {
+      localStorage.setItem('app_foco_state', JSON.stringify(state));
+    }
+
+    function getTodayString() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    // Inicialização do dia / Passagem da meia-noite (00:00)
+    function initDayCheck() {
+      const today = getTodayString();
+
+      // Se for um novo dia (mudou a data)
+      if (state.lastDate !== today) {
+        if (state.lastDate !== null) {
+          // Verifica se o dia anterior foi concluído com sucesso
+          // Se não concluiu tudo no dia anterior, zera a ofensiva!
+          const allCompletedYesterday = state.todayTasks.length > 0 && state.todayTasks.every(t => t.done);
+          if (!allCompletedYesterday && state.completedTodayDate !== state.lastDate) {
+            state.streak = 0;
+          }
+        }
+
+        // Reinicia a lista de tarefas para o novo dia com base no cadastro fixo
+        state.todayTasks = state.masterTasks.map(t => ({
+          id: t.id,
+          text: t.text,
+          done: false
+        }));
+
+        state.lastDate = today;
+        saveState();
+      }
+    }
+
+    // Atualiza lógica da ofensiva com base na lista de hoje
+    function updateStreakLogic() {
+      const today = getTodayString();
+      const hasTasks = state.todayTasks.length > 0;
+      const allDone = hasTasks && state.todayTasks.every(t => t.done);
+
+      if (allDone) {
+        // Se concluiu todas e ainda não pontuou hoje
+        if (state.completedTodayDate !== today) {
+          state.streak += 1;
+          state.completedTodayDate = today;
+        }
+      } else {
+        // Se NÃO concluiu todas, mas já tinha pontuado hoje (ex: adicionou nova tarefa)
+        if (state.completedTodayDate === today) {
+          state.streak = Math.max(0, state.streak - 1);
+          state.completedTodayDate = null; // Libera para pontuar novamente assim que terminar a nova
+        }
+      }
+
+      saveState();
+      render();
+    }
+
+    // Alternar entre abas
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+
+      if (tabName === 'today') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        document.getElementById('viewToday').classList.add('active');
+      } else {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('viewManage').classList.add('active');
+      }
+    }
+
+    // AÇÕES: ABA HOJE
+    function toggleTodayTask(id) {
+      const task = state.todayTasks.find(t => t.id === id);
+      if (task) {
+        task.done = !task.done;
+        updateStreakLogic();
+      }
+    }
+
+    // AÇÕES: ABA GERENCIAR ATIVIDADES
+    function addMasterTask() {
+      const input = document.getElementById('newMasterInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const newTask = {
+        id: Date.now(),
+        text: text
+      };
+
+      state.masterTasks.push(newTask);
+
+      // Também adiciona na lista de hoje imediatamente
+      state.todayTasks.push({
+        id: newTask.id,
+        text: newTask.text,
+        done: false
+      });
+
+      input.value = '';
+      updateStreakLogic();
+    }
+
+    function deleteMasterTask(id) {
+      state.masterTasks = state.masterTasks.filter(t => t.id !== id);
+      state.todayTasks = state.todayTasks.filter(t => t.id !== id);
+      updateStreakLogic();
+    }
+
+    // RENDERIZAÇÃO DA INTERFACE
+    function render() {
+      // 1. Ofensiva
+      document.getElementById('streakCount').innerText = `🔥 ${state.streak}`;
+      const streakStatusEl = document.getElementById('streakStatus');
+
+      const hasTasks = state.todayTasks.length > 0;
+      const allDone = hasTasks && state.todayTasks.every(t => t.done);
+
+      if (!hasTasks) {
+        streakStatusEl.innerText = "Cadastre atividades na aba ao lado!";
+        streakStatusEl.className = "streak-status";
+      } else if (allDone) {
+        streakStatusEl.innerText = "🎉 Todas as metas de hoje concluídas!";
+        streakStatusEl.className = "streak-status complete";
+      } else {
+        const remaining = state.todayTasks.filter(t => !t.done).length;
+        streakStatusEl.innerText = `Falta(m) ${remaining} meta(s) para garantir o dia.`;
+        streakStatusEl.className = "streak-status";
+      }
+
+      // 2. Lista de Hoje
+      const todayListEl = document.getElementById('todayTaskList');
+      todayListEl.innerHTML = '';
+
+      if (state.todayTasks.length === 0) {
+        todayListEl.innerHTML = `<div class="empty-state">Nenhuma atividade registrada para hoje.<br>Vá na aba "Gerenciar Atividades" para cadastrar!</div>`;
+      } else {
+        state.todayTasks.forEach(task => {
+          const li = document.createElement('li');
+          li.className = `task-item ${task.done ? 'done' : ''}`;
+          li.innerHTML = `
+            <div class="checkbox-container" onclick="toggleTodayTask(${task.id})">
+              <div class="custom-checkbox"></div>
+              <span class="task-text">${escapeHtml(task.text)}</span>
+            </div>
+          `;
+          todayListEl.appendChild(li);
+        });
+      }
+
+      // 3. Lista de Gerenciamento
+      const masterListEl = document.getElementById('masterTaskList');
+      masterListEl.innerHTML = '';
+
+      if (state.masterTasks.length === 0) {
+        masterListEl.innerHTML = `<div class="empty-state">Sua lista diária está vazia. Adicione uma atividade acima!</div>`;
+      } else {
+        state.masterTasks.forEach(task => {
+          const li = document.createElement('li');
+          li.className = 'task-item';
+          li.innerHTML = `
+            <span class="task-text">${escapeHtml(task.text)}</span>
+            <button class="btn-delete" onclick="deleteMasterTask(${task.id})">&times;</button>
+          `;
+          masterListEl.appendChild(li);
+        });
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.innerText = text;
+      return div.innerHTML;
+    }
+
+    // Inicialização ao carregar a página
+    initDayCheck();
+    render();
+  </script>
+</body>
+</html>
