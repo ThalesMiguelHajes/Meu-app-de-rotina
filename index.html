@@ -133,6 +133,43 @@
       display: block;
     }
 
+    /* Suggestions Styles */
+    .suggestions-container {
+      margin-bottom: 20px;
+    }
+    
+    .suggestions-container h4 {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin: 0 0 10px 0;
+      font-weight: 600;
+    }
+    
+    .suggestions-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .suggestion-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .suggestion-btn:hover, .suggestion-btn:active {
+      border-color: var(--accent);
+      background: rgba(249, 115, 22, 0.1);
+    }
+
     /* Form Styles */
     .add-form {
       display: flex;
@@ -308,6 +345,15 @@
       <div class="info-card">
         ⚙️ <strong>Atividades Diárias:</strong> Cadastre aqui as tarefas que devem aparecer todos os dias.
       </div>
+      
+      <!-- Sugestões de Atividades -->
+      <div class="suggestions-container">
+        <h4>Sugestões (Toque para adicionar)</h4>
+        <div class="suggestions-list" id="suggestionsList">
+          <!-- Sugestões serão renderizadas aqui pelo JS -->
+        </div>
+      </div>
+
       <div class="add-form">
         <input type="text" id="newMasterInput" placeholder="Nova atividade diária...">
         <button class="btn-add" onclick="addMasterTask()">+</button>
@@ -325,6 +371,18 @@
       masterTasks: [],         // Lista fixa de atividades diárias
       todayTasks: []           // [{ id, text, done }] do dia atual
     };
+
+    // Sugestões padrão personalizadas para vocês!
+    const defaultSuggestions = [
+      "Beber 2L de água 💧",
+      "Ler 10 páginas 📖",
+      "Treinar / Exercício 💪",
+      "Meditação / Relaxar 🧘‍♂️",
+      "Arrumar a cama 🛏️",
+      "Tempo de qualidade juntos ❤️",
+      "Estudar 30 min 📚",
+      "Skin care ✨"
+    ];
 
     function saveState() {
       localStorage.setItem('app_foco_state', JSON.stringify(state));
@@ -410,27 +468,28 @@
     }
 
     // AÇÕES: ABA GERENCIAR ATIVIDADES
-    function addMasterTask() {
-      const input = document.getElementById('newMasterInput');
-      const text = input.value.trim();
+    function addSpecificMasterTask(text) {
       if (!text) return;
-
       const newTask = {
         id: Date.now(),
         text: text
       };
-
       state.masterTasks.push(newTask);
-
-      // Também adiciona na lista de hoje imediatamente
       state.todayTasks.push({
         id: newTask.id,
         text: newTask.text,
         done: false
       });
-
-      input.value = '';
       updateStreakLogic();
+    }
+
+    function addMasterTask() {
+      const input = document.getElementById('newMasterInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      addSpecificMasterTask(text);
+      input.value = '';
     }
 
     function deleteMasterTask(id) {
@@ -495,6 +554,26 @@
             <button class="btn-delete" onclick="deleteMasterTask(${task.id})">&times;</button>
           `;
           masterListEl.appendChild(li);
+        });
+      }
+
+      // 4. Renderizar Sugestões
+      const suggestionsContainer = document.getElementById('suggestionsList');
+      suggestionsContainer.innerHTML = '';
+      
+      const availableSuggestions = defaultSuggestions.filter(sug => 
+        !state.masterTasks.some(task => task.text.trim().toLowerCase() === sug.trim().toLowerCase())
+      );
+
+      if (availableSuggestions.length === 0) {
+        suggestionsContainer.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem; padding: 8px 0;">Todas as sugestões já foram adicionadas!</span>';
+      } else {
+        availableSuggestions.forEach(sug => {
+          const btn = document.createElement('button');
+          btn.className = 'suggestion-btn';
+          btn.innerText = `+ ${sug}`;
+          btn.onclick = () => addSpecificMasterTask(sug);
+          suggestionsContainer.appendChild(btn);
         });
       }
     }
