@@ -5,8 +5,13 @@ let state = JSON.parse(localStorage.getItem('app_foco_state')) || {
   completedTodayDate: null, // Data em que ganhou +1 na ofensiva ('YYYY-MM-DD')
   masterTasks: [],         // Lista fixa de atividades diárias habilitadas
   todayTasks: [],          // [{ id, text, done }] do dia atual
-  lastCelebratedStreak: 0  // Guardar última ofensiva em que disparou a celebração de 5 dias
+  lastCelebratedStreak: 0, // Guardar última ofensiva em que disparou a celebração de 5 dias
+  completedDays: []        // Array de datas concluídas ['YYYY-MM-DD', ...]
 };
+
+if (!state.completedDays) {
+  state.completedDays = [];
+}
 
 // Sugestões padrão com ícones
 const defaultSuggestions = [
@@ -19,6 +24,8 @@ const defaultSuggestions = [
   "Estudar 30 min 📚",
   "Skin care ✨"
 ];
+
+let currentCalendarDate = new Date();
 
 function saveState() {
   localStorage.setItem('app_foco_state', JSON.stringify(state));
@@ -84,6 +91,9 @@ function updateStreakLogic() {
     if (state.completedTodayDate !== today) {
       state.streak += 1;
       state.completedTodayDate = today;
+      if (!state.completedDays.includes(today)) {
+        state.completedDays.push(today);
+      }
       checkGoalCelebration();
     }
   } else {
@@ -91,6 +101,7 @@ function updateStreakLogic() {
     if (state.completedTodayDate === today) {
       state.streak = Math.max(0, state.streak - 1);
       state.completedTodayDate = null;
+      state.completedDays = state.completedDays.filter(d => d !== today);
     }
   }
 
@@ -116,9 +127,85 @@ function switchTab(tabName) {
   if (tabName === 'today') {
     document.querySelectorAll('.tab-btn')[0].classList.add('active');
     document.getElementById('viewToday').classList.add('active');
-  } else {
+  } else if (tabName === 'calendar') {
     document.querySelectorAll('.tab-btn')[1].classList.add('active');
+    document.getElementById('viewCalendar').classList.add('active');
+    renderCalendar();
+  } else {
+    document.querySelectorAll('.tab-btn')[2].classList.add('active');
     document.getElementById('viewManage').classList.add('active');
+  }
+}
+
+// LÓGICA DO CALENDÁRIO
+function changeMonth(delta) {
+  currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const year = currentCalendarDate.getFullYear();
+  const month = currentCalendarDate.getMonth();
+
+  const monthNames = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
+
+  const monthTitleEl = document.getElementById('calendarMonthTitle');
+  if (monthTitleEl) {
+    monthTitleEl.innerText = `${monthNames[month]} ${year}`;
+  }
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const todayStr = getTodayString();
+  const gridEl = document.getElementById('calendarGrid');
+  if (!gridEl) return;
+  gridEl.innerHTML = '';
+
+  for (let i = 0; i < firstDay; i++) {
+    const emptyDiv = document.createElement('div');
+    emptyDiv.className = 'calendar-day empty';
+    gridEl.appendChild(emptyDiv);
+  }
+
+  let completedCountThisMonth = 0;
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dayDiv = document.createElement('div');
+    dayDiv.className = 'calendar-day';
+    dayDiv.innerText = day;
+
+    const isToday = dayStr === todayStr;
+    const isCompleted = state.completedDays.includes(dayStr);
+
+    if (isCompleted) {
+      completedCountThisMonth++;
+      dayDiv.classList.add('completed');
+    }
+
+    if (isToday) {
+      dayDiv.classList.add('today');
+    }
+
+    gridEl.appendChild(dayDiv);
+  }
+
+  const monthCountEl = document.getElementById('monthCompletedCount');
+  if (monthCountEl) monthCountEl.innerText = completedCountThisMonth;
+
+  const rateEl = document.getElementById('monthSuccessRate');
+  if (rateEl) {
+    const today = new Date();
+    let totalElapsedDays = daysInMonth;
+    if (year === today.getFullYear() && month === today.getMonth()) {
+      totalElapsedDays = today.getDate();
+    }
+    const rate = totalElapsedDays > 0 ? Math.round((completedCountThisMonth / totalElapsedDays) * 100) : 0;
+    rateEl.innerText = `${rate}%`;
   }
 }
 
@@ -244,7 +331,7 @@ function render() {
   todayListEl.innerHTML = '';
 
   if (state.todayTasks.length === 0) {
-    todayListEl.innerHTML = `<div class="empty-state">Nenhuma atividade ativa para hoje.<br>Vá na aba "Gerenciar Atividades" para ativar!</div>`;
+    todayListEl.innerHTML = `<div class="empty-state">Nenhuma atividade ativa para hoje.<br>Vá na aba "Gerenciar" para ativar!</div>`;
   } else {
     state.todayTasks.forEach(task => {
       const li = document.createElement('li');
@@ -261,44 +348,51 @@ function render() {
 
   // 3. Renderizar Lista de Atividades Sugeridas com Interruptor (Toggle Switch)
   const defaultListEl = document.getElementById('defaultTaskList');
-  defaultListEl.innerHTML = '';
+  if (defaultListEl) {
+    defaultListEl.innerHTML = '';
 
-  defaultSuggestions.forEach((sug, index) => {
-    const isActive = state.masterTasks.some(t => t.text.trim().toLowerCase() === sug.trim().toLowerCase());
-    const li = document.createElement('li');
-    li.className = `task-item ${isActive ? '' : 'inactive'}`;
-    
-    li.innerHTML = `
-      <span class="task-text">${escapeHtml(sug)}</span>
-      <label class="switch">
-        <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleDefaultTaskByIndex(${index}, this.checked)">
-        <span class="slider"></span>
-      </label>
-    `;
-    defaultListEl.appendChild(li);
-  });
+    defaultSuggestions.forEach((sug, index) => {
+      const isActive = state.masterTasks.some(t => t.text.trim().toLowerCase() === sug.trim().toLowerCase());
+      const li = document.createElement('li');
+      li.className = `task-item ${isActive ? '' : 'inactive'}`;
+      
+      li.innerHTML = `
+        <span class="task-text">${escapeHtml(sug)}</span>
+        <label class="switch">
+          <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleDefaultTaskByIndex(${index}, this.checked)">
+          <span class="slider"></span>
+        </label>
+      `;
+      defaultListEl.appendChild(li);
+    });
+  }
 
   // 4. Renderizar Lista de Atividades Personalizadas (Custom)
   const masterListEl = document.getElementById('masterTaskList');
-  masterListEl.innerHTML = '';
+  if (masterListEl) {
+    masterListEl.innerHTML = '';
 
-  const customTasks = state.masterTasks.filter(task => 
-    !defaultSuggestions.some(sug => sug.trim().toLowerCase() === task.text.trim().toLowerCase())
-  );
+    const customTasks = state.masterTasks.filter(task => 
+      !defaultSuggestions.some(sug => sug.trim().toLowerCase() === task.text.trim().toLowerCase())
+    );
 
-  if (customTasks.length === 0) {
-    masterListEl.innerHTML = `<div class="empty-state">Nenhuma atividade personalizada criada ainda.</div>`;
-  } else {
-    customTasks.forEach(task => {
-      const li = document.createElement('li');
-      li.className = 'task-item';
-      li.innerHTML = `
-        <span class="task-text">${escapeHtml(task.text)}</span>
-        <button class="btn-delete" onclick="deleteMasterTask(${task.id})" title="Excluir">&times;</button>
-      `;
-      masterListEl.appendChild(li);
-    });
+    if (customTasks.length === 0) {
+      masterListEl.innerHTML = `<div class="empty-state">Nenhuma atividade personalizada criada ainda.</div>`;
+    } else {
+      customTasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = 'task-item';
+        li.innerHTML = `
+          <span class="task-text">${escapeHtml(task.text)}</span>
+          <button class="btn-delete" onclick="deleteMasterTask(${task.id})" title="Excluir">&times;</button>
+        `;
+        masterListEl.appendChild(li);
+      });
+    }
   }
+
+  // 5. Atualizar Calendário
+  renderCalendar();
 }
 
 function escapeHtml(text) {
@@ -312,6 +406,10 @@ function escapeHtml(text) {
 // ==========================================
 function testAddStreak() {
   state.streak += 1;
+  const today = getTodayString();
+  if (!state.completedDays.includes(today)) {
+    state.completedDays.push(today);
+  }
   checkGoalCelebration();
   saveState();
   render();
@@ -320,6 +418,8 @@ function testAddStreak() {
 function testResetStreak() {
   state.streak = 0;
   state.lastCelebratedStreak = 0;
+  const today = getTodayString();
+  state.completedDays = state.completedDays.filter(d => d !== today);
   saveState();
   render();
 }
