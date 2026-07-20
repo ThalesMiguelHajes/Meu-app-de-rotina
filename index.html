@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Meu Foco Diário</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="container">
+    <!-- Bloco de Ofensiva -->
+    <div class="streak-card">
+      <div class="streak-title">Ofensiva Atual</div>
+      <div class="streak-count" id="streakCount">🔥 0</div>
+      <div class="streak-status" id="streakStatus">Carregando...</div>
+    </div>
+
+    <!-- Navegação por Abas -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('today')">Hoje</button>
+      <button class="tab-btn" onclick="switchTab('manage')">Gerenciar Atividades</button>
+    </div>
+
+    <!-- Aba 1: Metas de Hoje -->
+    <div id="viewToday" class="view active">
+      <div class="info-card">
+        📌 <strong>Como funciona:</strong> Complete todas as atividades do dia para garantir o seu ponto de ofensiva. Se você adicionar novas atividades, precise concluí-las também!
+      </div>
+      <ul id="todayTaskList" class="task-list"></ul>
+    </div>
+
+    <!-- Aba 2: Gerenciar Atividades Diárias -->
+    <div id="viewManage" class="view">
+      <div class="info-card">
+        ⚙️ <strong>Atividades Diárias:</strong> Cadastre aqui as tarefas que devem aparecer todos os dias.
+      </div>
+      
+      <!-- Sugestões de Atividades -->
+      <div class="suggestions-container">
+        <h4>Sugestões (Toque para adicionar)</h4>
+        <div class="suggestions-list" id="suggestionsList">
+          <!-- Sugestões serão renderizadas aqui pelo JS -->
+        </div>
+      </div>
+
+      <div class="add-form">
+        <input type="text" id="newMasterInput" placeholder="Nova atividade diária...">
+        <button class="btn-add" onclick="addMasterTask()">+</button>
+      </div>
+      <ul id="masterTaskList" class="task-list"></ul>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
