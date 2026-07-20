@@ -33,22 +33,24 @@
     <!-- Aba 2: Gerenciar Atividades Diárias -->
     <div id="viewManage" class="view">
       <div class="info-card">
-        ⚙️ <strong>Atividades Diárias:</strong> Cadastre aqui as tarefas que devem aparecer todos os dias.
+        ⚙️ <strong>Atividades Diárias:</strong> Ative ou desative as atividades padrão com o interruptor, ou crie suas próprias tarefas.
       </div>
       
-      <!-- Sugestões de Atividades -->
-      <div class="suggestions-container">
-        <h4>Sugestões (Toque para adicionar)</h4>
-        <div class="suggestions-list" id="suggestionsList">
-          <!-- Sugestões serão renderizadas aqui pelo JS -->
-        </div>
-      </div>
+      <!-- Seção: Atividades Sugeridas com Interruptor -->
+      <div class="section-header">⭐ Atividades Sugeridas</div>
+      <ul id="defaultTaskList" class="task-list">
+        <!-- Renderizado pelo JS com interruptor (toggle switch) -->
+      </ul>
 
+      <!-- Seção: Atividades Personalizadas -->
+      <div class="section-header">➕ Minhas Atividades Personalizadas</div>
       <div class="add-form">
-        <input type="text" id="newMasterInput" placeholder="Nova atividade diária...">
+        <input type="text" id="newMasterInput" placeholder="Nova atividade personalizada...">
         <button class="btn-add" onclick="addMasterTask()">+</button>
       </div>
-      <ul id="masterTaskList" class="task-list"></ul>
+      <ul id="masterTaskList" class="task-list">
+        <!-- Renderizado pelo JS -->
+      </ul>
     </div>
   </div>
 

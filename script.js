@@ -3,11 +3,11 @@ let state = JSON.parse(localStorage.getItem('app_foco_state')) || {
   streak: 0,
   lastDate: null,          // Última data em que abriu o app ('YYYY-MM-DD')
   completedTodayDate: null, // Data em que ganhou +1 na ofensiva ('YYYY-MM-DD')
-  masterTasks: [],         // Lista fixa de atividades diárias
+  masterTasks: [],         // Lista fixa de atividades diárias habilitadas
   todayTasks: []           // [{ id, text, done }] do dia atual
 };
 
-// Sugestões padrão personalizadas
+// Sugestões padrão com ícones
 const defaultSuggestions = [
   "Beber 2L de água 💧",
   "Ler 10 páginas 📖",
@@ -36,7 +36,6 @@ function initDayCheck() {
   if (state.lastDate !== today) {
     if (state.lastDate !== null) {
       // Verifica se o dia anterior foi concluído com sucesso
-      // Se não concluiu tudo no dia anterior, zera a ofensiva!
       const allCompletedYesterday = state.todayTasks.length > 0 && state.todayTasks.every(t => t.done);
       if (!allCompletedYesterday && state.completedTodayDate !== state.lastDate) {
         state.streak = 0;
@@ -102,9 +101,44 @@ function toggleTodayTask(id) {
   }
 }
 
-// AÇÕES: ABA GERENCIAR ATIVIDADES
-function addSpecificMasterTask(text) {
+// AÇÕES: ABA GERENCIAR ATIVIDADES - ATIVAR / DESATIVAR SUGESTÃO PADRÃO
+function toggleDefaultTaskByIndex(index, enable) {
+  const text = defaultSuggestions[index];
   if (!text) return;
+
+  const existingMaster = state.masterTasks.find(t => t.text.trim().toLowerCase() === text.trim().toLowerCase());
+
+  if (enable) {
+    if (!existingMaster) {
+      const newTask = {
+        id: Date.now(),
+        text: text
+      };
+      state.masterTasks.push(newTask);
+      if (!state.todayTasks.some(t => t.text.trim().toLowerCase() === text.trim().toLowerCase())) {
+        state.todayTasks.push({
+          id: newTask.id,
+          text: newTask.text,
+          done: false
+        });
+      }
+    }
+  } else {
+    if (existingMaster) {
+      state.masterTasks = state.masterTasks.filter(t => t.id !== existingMaster.id);
+      state.todayTasks = state.todayTasks.filter(t => t.id !== existingMaster.id);
+    }
+  }
+
+  updateStreakLogic();
+}
+
+// AÇÕES: ABA GERENCIAR ATIVIDADES - ADICIONAR PERSONALIZADA
+function addMasterTask() {
+  const input = document.getElementById('newMasterInput');
+  const text = input.value.trim();
+  if (!text) return;
+
   const newTask = {
     id: Date.now(),
     text: text
@@ -115,16 +149,9 @@ function addSpecificMasterTask(text) {
     text: newTask.text,
     done: false
   });
-  updateStreakLogic();
-}
 
-function addMasterTask() {
-  const input = document.getElementById('newMasterInput');
-  const text = input.value.trim();
-  if (!text) return;
-
-  addSpecificMasterTask(text);
   input.value = '';
+  updateStreakLogic();
 }
 
 function deleteMasterTask(id) {
@@ -143,7 +170,7 @@ function render() {
   const allDone = hasTasks && state.todayTasks.every(t => t.done);
 
   if (!hasTasks) {
-    streakStatusEl.innerText = "Cadastre atividades na aba ao lado!";
+    streakStatusEl.innerText = "Cadastre ou ative atividades na aba ao lado!";
     streakStatusEl.className = "streak-status";
   } else if (allDone) {
     streakStatusEl.innerText = "🎉 Todas as metas de hoje concluídas!";
@@ -159,7 +186,7 @@ function render() {
   todayListEl.innerHTML = '';
 
   if (state.todayTasks.length === 0) {
-    todayListEl.innerHTML = `<div class="empty-state">Nenhuma atividade registrada para hoje.<br>Vá na aba "Gerenciar Atividades" para cadastrar!</div>`;
+    todayListEl.innerHTML = `<div class="empty-state">Nenhuma atividade ativa para hoje.<br>Vá na aba "Gerenciar Atividades" para ativar!</div>`;
   } else {
     state.todayTasks.forEach(task => {
       const li = document.createElement('li');
@@ -174,41 +201,44 @@ function render() {
     });
   }
 
-  // 3. Lista de Gerenciamento
+  // 3. Renderizar Lista de Atividades Sugeridas com Interruptor (Toggle Switch)
+  const defaultListEl = document.getElementById('defaultTaskList');
+  defaultListEl.innerHTML = '';
+
+  defaultSuggestions.forEach((sug, index) => {
+    const isActive = state.masterTasks.some(t => t.text.trim().toLowerCase() === sug.trim().toLowerCase());
+    const li = document.createElement('li');
+    li.className = `task-item ${isActive ? '' : 'inactive'}`;
+    
+    li.innerHTML = `
+      <span class="task-text">${escapeHtml(sug)}</span>
+      <label class="switch">
+        <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleDefaultTaskByIndex(${index}, this.checked)">
+        <span class="slider"></span>
+      </label>
+    `;
+    defaultListEl.appendChild(li);
+  });
+
+  // 4. Renderizar Lista de Atividades Personalizadas (Custom)
   const masterListEl = document.getElementById('masterTaskList');
   masterListEl.innerHTML = '';
 
-  if (state.masterTasks.length === 0) {
-    masterListEl.innerHTML = `<div class="empty-state">Sua lista diária está vazia. Adicione uma atividade acima!</div>`;
+  const customTasks = state.masterTasks.filter(task => 
+    !defaultSuggestions.some(sug => sug.trim().toLowerCase() === task.text.trim().toLowerCase())
+  );
+
+  if (customTasks.length === 0) {
+    masterListEl.innerHTML = `<div class="empty-state">Nenhuma atividade personalizada criada ainda.</div>`;
   } else {
-    state.masterTasks.forEach(task => {
+    customTasks.forEach(task => {
       const li = document.createElement('li');
       li.className = 'task-item';
       li.innerHTML = `
         <span class="task-text">${escapeHtml(task.text)}</span>
-        <button class="btn-delete" onclick="deleteMasterTask(${task.id})">&times;</button>
+        <button class="btn-delete" onclick="deleteMasterTask(${task.id})" title="Excluir">&times;</button>
       `;
       masterListEl.appendChild(li);
-    });
-  }
-
-  // 4. Renderizar Sugestões
-  const suggestionsContainer = document.getElementById('suggestionsList');
-  suggestionsContainer.innerHTML = '';
-  
-  const availableSuggestions = defaultSuggestions.filter(sug => 
-    !state.masterTasks.some(task => task.text.trim().toLowerCase() === sug.trim().toLowerCase())
-  );
-
-  if (availableSuggestions.length === 0) {
-    suggestionsContainer.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem; padding: 8px 0;">Todas as sugestões já foram adicionadas!</span>';
-  } else {
-    availableSuggestions.forEach(sug => {
-      const btn = document.createElement('button');
-      btn.className = 'suggestion-btn';
-      btn.innerText = `+ ${sug}`;
-      btn.onclick = () => addSpecificMasterTask(sug);
-      suggestionsContainer.appendChild(btn);
     });
   }
 }
