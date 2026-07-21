@@ -109,6 +109,25 @@ function updateStreakLogic() {
   render();
 }
 
+// Alternar recolher/expandir seções de hoje
+function togglePendingCollapse() {
+  const contentEl = document.getElementById('pendingTaskList');
+  const btnEl = document.getElementById('pendingCollapseBtn');
+  if (contentEl && btnEl) {
+    contentEl.classList.toggle('collapsed');
+    btnEl.classList.toggle('collapsed');
+  }
+}
+
+function toggleCompletedCollapse() {
+  const contentEl = document.getElementById('completedTaskList');
+  const btnEl = document.getElementById('completedCollapseBtn');
+  if (contentEl && btnEl) {
+    contentEl.classList.toggle('collapsed');
+    btnEl.classList.toggle('collapsed');
+  }
+}
+
 // Alternar recolher/expandir sugestões
 function toggleSuggestionsCollapse() {
   const contentEl = document.getElementById('defaultTaskList');
@@ -216,6 +235,30 @@ function toggleTodayTask(id) {
     task.done = !task.done;
     updateStreakLogic();
   }
+}
+
+function addTodayTask() {
+  const input = document.getElementById('newTodayInput');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+
+  const newTask = {
+    id: Date.now(),
+    text: text,
+    done: false,
+    isOneOff: true
+  };
+  
+  state.todayTasks.push(newTask);
+  input.value = '';
+  updateStreakLogic();
+}
+
+function deleteTodayTask(id, event) {
+  if (event) event.stopPropagation();
+  state.todayTasks = state.todayTasks.filter(t => t.id !== id);
+  updateStreakLogic();
 }
 
 // AÇÕES: ABA GERENCIAR ATIVIDADES - ATIVAR / DESATIVAR SUGESTÃO PADRÃO
@@ -327,23 +370,59 @@ function render() {
   }
 
   // 2. Lista de Hoje
-  const todayListEl = document.getElementById('todayTaskList');
-  todayListEl.innerHTML = '';
+  const pendingListEl = document.getElementById('pendingTaskList');
+  const completedListEl = document.getElementById('completedTaskList');
+  if (pendingListEl) pendingListEl.innerHTML = '';
+  if (completedListEl) completedListEl.innerHTML = '';
+
+  // Monitor de Hoje
+  const todayMonitorEl = document.getElementById('todayMonitor');
+  if (todayMonitorEl) {
+    const totalTasks = state.todayTasks.length;
+    const completedTasks = state.todayTasks.filter(t => t.done).length;
+    todayMonitorEl.innerText = `${completedTasks}/${totalTasks} concluídas`;
+    
+    if (totalTasks === 0) {
+      todayMonitorEl.style.display = 'none';
+    } else {
+      todayMonitorEl.style.display = 'inline-block';
+      if (completedTasks === totalTasks) {
+        todayMonitorEl.className = 'today-monitor complete';
+      } else {
+        todayMonitorEl.className = 'today-monitor';
+      }
+    }
+  }
 
   if (state.todayTasks.length === 0) {
-    todayListEl.innerHTML = `<div class="empty-state">Nenhuma atividade ativa para hoje.<br>Vá na aba "Gerenciar" para ativar!</div>`;
+    if (pendingListEl) pendingListEl.innerHTML = `<div class="empty-state">Nenhuma atividade ativa para hoje.<br>Vá na aba "Gerenciar" para ativar!</div>`;
   } else {
     state.todayTasks.forEach(task => {
       const li = document.createElement('li');
       li.className = `task-item ${task.done ? 'done' : ''}`;
+      
+      const badge = task.isOneOff ? `<span class="badge-one-off">Pontual</span>` : '';
+      
       li.innerHTML = `
         <div class="checkbox-container" onclick="toggleTodayTask(${task.id})">
           <div class="custom-checkbox"></div>
-          <span class="task-text">${escapeHtml(task.text)}</span>
+          <span class="task-text">${escapeHtml(task.text)} ${badge}</span>
         </div>
+        <button class="btn-delete" onclick="deleteTodayTask(${task.id}, event)" title="Remover de hoje">&times;</button>
       `;
-      todayListEl.appendChild(li);
+      if (task.done) {
+        if (completedListEl) completedListEl.appendChild(li);
+      } else {
+        if (pendingListEl) pendingListEl.appendChild(li);
+      }
     });
+    
+    if (completedListEl && completedListEl.children.length === 0) {
+      completedListEl.innerHTML = `<div class="empty-state" style="padding: 10px 20px;">Nenhuma atividade concluída ainda.</div>`;
+    }
+    if (pendingListEl && pendingListEl.children.length === 0) {
+      pendingListEl.innerHTML = `<div class="empty-state" style="padding: 10px 20px;">🎉 Todas pendentes concluídas!</div>`;
+    }
   }
 
   // 3. Renderizar Lista de Atividades Sugeridas com Interruptor (Toggle Switch)
@@ -387,6 +466,28 @@ function render() {
           <button class="btn-delete" onclick="deleteMasterTask(${task.id})" title="Excluir">&times;</button>
         `;
         masterListEl.appendChild(li);
+      });
+    }
+  }
+
+  // 4.5 Renderizar Lista de Atividades Pontuais (Só Hoje) na aba Gerenciar
+  const oneOffListEl = document.getElementById('oneOffTaskList');
+  if (oneOffListEl) {
+    oneOffListEl.innerHTML = '';
+
+    const oneOffTasks = state.todayTasks.filter(task => task.isOneOff);
+
+    if (oneOffTasks.length === 0) {
+      oneOffListEl.innerHTML = `<div class="empty-state">Nenhuma atividade pontual adicionada hoje.</div>`;
+    } else {
+      oneOffTasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = 'task-item';
+        li.innerHTML = `
+          <span class="task-text">${escapeHtml(task.text)} <span class="badge-one-off">Pontual</span></span>
+          <button class="btn-delete" onclick="deleteTodayTask(${task.id}, event)" title="Excluir">&times;</button>
+        `;
+        oneOffListEl.appendChild(li);
       });
     }
   }

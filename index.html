@@ -49,7 +49,25 @@
       <div class="info-card">
         📌 <strong>Como funciona:</strong> Complete todas as atividades do dia para garantir o seu ponto de ofensiva. Se você adicionar novas atividades, precise concluí-las também!
       </div>
-      <ul id="todayTaskList" class="task-list"></ul>
+      
+      <div class="today-header">
+        <span class="today-title">Suas Atividades</span>
+        <span class="today-monitor" id="todayMonitor">0/0</span>
+      </div>
+
+      <!-- Atividades Pendentes -->
+      <div class="section-header collapsible" onclick="togglePendingCollapse()">
+        <span>⏳ Pendentes</span>
+        <button class="btn-toggle-collapse" id="pendingCollapseBtn" title="Abrir/Fechar Pendentes">▼</button>
+      </div>
+      <ul id="pendingTaskList" class="task-list collapsible-content"></ul>
+
+      <!-- Atividades Concluídas -->
+      <div class="section-header collapsible" onclick="toggleCompletedCollapse()">
+        <span>✅ Concluídas</span>
+        <button class="btn-toggle-collapse" id="completedCollapseBtn" title="Abrir/Fechar Concluídas">▼</button>
+      </div>
+      <ul id="completedTaskList" class="task-list collapsible-content"></ul>
     </div>
 
     <!-- Aba 2: Calendário de Conquistas -->
@@ -108,12 +126,22 @@
       </ul>
 
       <!-- Seção: Atividades Personalizadas -->
-      <div class="section-header">➕ Minhas Atividades Personalizadas</div>
+      <div class="section-header">➕ Minhas Atividades Diárias (Fixas)</div>
       <div class="add-form">
-        <input type="text" id="newMasterInput" placeholder="Nova atividade personalizada...">
+        <input type="text" id="newMasterInput" placeholder="Nova atividade fixa...">
         <button class="btn-add" onclick="addMasterTask()">+</button>
       </div>
       <ul id="masterTaskList" class="task-list">
+        <!-- Renderizado pelo JS -->
+      </ul>
+
+      <!-- Seção: Tarefas Pontuais -->
+      <div class="section-header">🎯 Atividade Pontual (Só Hoje)</div>
+      <div class="add-form">
+        <input type="text" id="newTodayInput" placeholder="Adicionar pontual para hoje...">
+        <button class="btn-add" onclick="addTodayTask()">+</button>
+      </div>
+      <ul id="oneOffTaskList" class="task-list">
         <!-- Renderizado pelo JS -->
       </ul>
     </div>
